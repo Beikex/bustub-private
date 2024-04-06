@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <utility>
+#include <vector>
 
 #include "execution/executor_context.h"
 #include "execution/executors/abstract_executor.h"
@@ -34,8 +35,7 @@ class InsertExecutor : public AbstractExecutor {
    * @param plan The insert plan to be executed
    * @param child_executor The child executor from which inserted tuples are pulled
    */
-  InsertExecutor(ExecutorContext *exec_ctx, const InsertPlanNode *plan,
-                 std::unique_ptr<AbstractExecutor> &&child_executor);
+  InsertExecutor(ExecutorContext *exec_ctx, const InsertPlanNode *plan, std::unique_ptr<AbstractExecutor> &&child_exec);
 
   /** Initialize the insert */
   void Init() override;
@@ -57,6 +57,10 @@ class InsertExecutor : public AbstractExecutor {
  private:
   /** The insert plan node to be executed*/
   const InsertPlanNode *plan_;
+  TableInfo *table_info_ = nullptr;
+  std::unique_ptr<AbstractExecutor> child_;
+  std::vector<IndexInfo *> table_index_;
+  bool is_end_{false};
 };
 
 }  // namespace bustub

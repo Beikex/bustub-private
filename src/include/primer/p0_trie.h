@@ -263,9 +263,7 @@ class Trie {
    * @brief Construct a new Trie object. Initialize the root node with '\0'
    * character.
    */
-  Trie() { 
-    root_=std::make_unique<TrieNode>(TrieNode('\0'));
-   }
+  Trie() { root_ = std::make_unique<TrieNode>(TrieNode('\0')); }
 
   /**
    * TODO(P0): Add implementation
@@ -295,29 +293,29 @@ class Trie {
    */
   template <typename T>
   auto Insert(const std::string &key, T value) -> bool {
-    if(key.empty()){
+    if (key.empty()) {
       return false;
     }
     latch_.WLock();
-    auto p=&root_;
-    auto temp=p;
-    for(auto key_char:key){
-         if(!p->get()->HasChild(key_char)){
-          p->get()->InsertChildNode(key_char, std::make_unique<TrieNode>(key_char));
-         }
-         temp=p;
-         p=p->get()->GetChildNode(key_char);
+    auto p = &root_;
+    auto temp = p;
+    for (auto key_char : key) {
+      if (!p->get()->HasChild(key_char)) {
+        p->get()->InsertChildNode(key_char, std::make_unique<TrieNode>(key_char));
+      }
+      temp = p;
+      p = p->get()->GetChildNode(key_char);
     }
-    if(p->get()->IsEndNode()){
+    if (p->get()->IsEndNode()) {
       latch_.WUnlock();
       return false;
     }
-    auto node=std::move(*p);
+    auto node = std::move(*p);
     temp->get()->RemoveChildNode(key.back());
-    auto node1=std::make_unique<TrieNodeWithValue<T>>(std::move(*node),value);
-    temp->get()->InsertChildNode(key.back(),std::move(node1));
+    auto node1 = std::make_unique<TrieNodeWithValue<T>>(std::move(*node), value);
+    temp->get()->InsertChildNode(key.back(), std::move(node1));
     latch_.WUnlock();
-     return true;
+    return true;
   }
 
   /**
@@ -339,29 +337,29 @@ class Trie {
    */
 
   auto Remove(const std::string &key) -> bool {
-    if(key.empty()){
+    if (key.empty()) {
       return false;
     }
     latch_.WLock();
     std::stack<std::unique_ptr<TrieNode> *> sta;
-    auto p=&root_;
-    for(auto key_char:key){
-      if(!p->get()->HasChild(key_char)){
+    auto p = &root_;
+    for (auto key_char : key) {
+      if (!p->get()->HasChild(key_char)) {
         latch_.WUnlock();
         return false;
       }
       sta.push(p);
-      p=p->get()->GetChildNode(key_char);
+      p = p->get()->GetChildNode(key_char);
     }
     p->get()->SetEndNode(false);
-    while(!sta.empty() && !p->get()->HasChildren() && !p->get()->IsEndNode()){
-             auto node=sta.top();
-             sta.pop();
-             node->get()->RemoveChildNode(p->get()->GetKeyChar());
-             p=node;
+    while (!sta.empty() && !p->get()->HasChildren() && !p->get()->IsEndNode()) {
+      auto node = sta.top();
+      sta.pop();
+      node->get()->RemoveChildNode(p->get()->GetKeyChar());
+      p = node;
     }
     latch_.WUnlock();
-   return true;
+    return true;
   }
 
   /**
@@ -384,34 +382,34 @@ class Trie {
    */
   template <typename T>
   auto GetValue(const std::string &key, bool *success) -> T {
-      if(key.empty()){
-        *success=false;
+    if (key.empty()) {
+      *success = false;
+      return {};
+    }
+    latch_.RLock();
+    auto p = &root_;
+    for (auto key_char : key) {
+      if (!p->get()->HasChild(key_char)) {
+        latch_.RUnlock();
+        *success = false;
         return {};
       }
-      latch_.RLock();
-      auto p=&root_;
-      for(auto key_char:key){
-        if(!p->get()->HasChild(key_char)){
-          latch_.RUnlock();
-          *success=false;
-          return {};
-        }
-        p=p->get()->GetChildNode(key_char);
-      }
-      if(!p->get()->IsEndNode()){
-        latch_.RUnlock();
-          *success=false;
-          return {};
-      }
-      auto res=dynamic_cast<TrieNodeWithValue<T>*>(p->get());
-      if(!res){
-        latch_.RUnlock();
-          *success=false;
-          return {};
-      }
-       latch_.RUnlock();
-       *success=true;
-        return res->GetValue();
+      p = p->get()->GetChildNode(key_char);
+    }
+    if (!p->get()->IsEndNode()) {
+      latch_.RUnlock();
+      *success = false;
+      return {};
+    }
+    auto res = dynamic_cast<TrieNodeWithValue<T> *>(p->get());
+    if (!res) {
+      latch_.RUnlock();
+      *success = false;
+      return {};
+    }
+    latch_.RUnlock();
+    *success = true;
+    return res->GetValue();
   }
 };
 }  // namespace bustub
