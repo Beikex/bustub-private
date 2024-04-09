@@ -33,7 +33,7 @@ auto LockManager::LockTable(Transaction *txn, LockMode lock_mode, const table_oi
        (lock_mode==LockMode::EXCLUSIVE || lock_mode==LockMode::INTENTION_EXCLUSIVE)){
         txn->SetState(TransactionState::ABORTED);
         throw TransactionAbortException(txn->GetTransactionId(),AbortReason::LOCK_ON_SHRINKING);
-       }
+       }//这是一条注释
   }
   if(txn->GetIsolationLevel()==IsolationLevel::READ_COMMITTED){
     if(txn->GetState()==TransactionState::SHRINKING && 
